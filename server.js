@@ -1,5 +1,6 @@
 require('dotenv').config({ override: true });
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
@@ -18,7 +19,7 @@ const app = express();
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
 }));
 app.use(express.json({ limit: '5mb' }));
@@ -41,6 +42,16 @@ app.use('/api/projects/:projectId/files', projectFilesRoutes);
 
 // Health
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+
+// Serve static assets in production
+const frontendPath = path.join(__dirname, 'frontend', 'dist');
+app.use(express.static(frontendPath));
+
+// Handle SPA routing: any request that doesn't match an API route or static file should serve index.html
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Route not found.' }));
