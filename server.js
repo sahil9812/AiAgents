@@ -64,6 +64,9 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`✅ AI Agent Server running on http://localhost:${PORT}`);
-    console.log(`   Env: ${process.env.NODE_ENV || 'development'}`);
+    if (process.env.NODE_ENV === 'production') {
+        console.log(`🚀 AI Agent Server is LIVE in production on port ${PORT}`);
+    } else {
+        console.log(`✅ AI Agent Server running on http://localhost:${PORT}`);
+    }
 });
