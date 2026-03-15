@@ -48,7 +48,7 @@ const frontendPath = path.join(__dirname, 'frontend', 'dist');
 app.use(express.static(frontendPath));
 
 // Handle SPA routing: any request that doesn't match an API route or static file should serve index.html
-app.get('*', (req, res, next) => {
+app.get('/:path*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
