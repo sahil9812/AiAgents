@@ -52,7 +52,7 @@ const SUGGESTIONS = [
 ];
 const MAX_CHARS = 8000;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 function formatTime(date) {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -128,7 +128,7 @@ export default function ChatPage() {
         fetchLatestCredits();
         loadConversationList();
         // Fetch announcement
-        fetch('http://localhost:5000/api/auth/announcement')
+        fetch('/api/auth/announcement')
             .then(r => r.json())
             .then(d => { if (d.announcement) setAnnouncement(d.announcement); })
             .catch(() => { });

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getToken() { return localStorage.getItem('token'); }
