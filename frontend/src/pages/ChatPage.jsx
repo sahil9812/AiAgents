@@ -135,7 +135,13 @@ export default function ChatPage() {
     }, []);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const list = messagesEndRef.current?.parentElement;
+        if (list) {
+            const isAtBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 150;
+            if (isAtBottom || messages.length <= 1) {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
     }, [messages, loading]);
 
     // Close template panel on outside click
@@ -621,189 +627,190 @@ export default function ChatPage() {
                 </div>
 
                 <div className="chat-messages">
-                    {messages.length === 0 && !loading ? (
-                        <div className="chat-welcome">
-                            <div className="chat-welcome-icon">🤖</div>
-                            <h2>How can I help you today?</h2>
-                            <p>I'm your AI Coding &amp; Task Automation Agent. Write code, debug errors, explain concepts, or automate tasks.</p>
-                            <div className="welcome-chips">
-                                {SUGGESTIONS.map(s => (
-                                    <button key={s} className="welcome-chip" onClick={() => sendMessage(s)}>{s}</button>
-                                ))}
+                    <div className="chat-container-inner">
+                        {messages.length === 0 && !loading ? (
+                            <div className="chat-welcome">
+                                <div className="chat-welcome-icon">🤖</div>
+                                <h2>How can I help you today?</h2>
+                                <p>I'm your AI Coding &amp; Task Automation Agent. Write code, debug errors, explain concepts, or automate tasks.</p>
+                                <div className="welcome-chips">
+                                    {SUGGESTIONS.map(s => (
+                                        <button key={s} className="welcome-chip" onClick={() => sendMessage(s)}>{s}</button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <>
-                            {messages.map((msg, i) => (
-                                <div key={i} id={`message-${i}`} className={`message ${msg.role === 'user' ? 'user' : 'agent'}`}>
-                                    <div className="message-avatar">{msg.role === 'user' ? userInitial : '🤖'}</div>
-                                    <div className="message-content">
-                                        <div className="message-bubble"
-                                            style={msg.isError ? { borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.05)' } : {}}>
-                                            {/* Show image if user attached one */}
-                                            {msg.imageUrl && (
-                                                <div className="message-image-wrap">
-                                                    <img src={msg.imageUrl} alt="Attached" className="message-image" />
-                                                </div>
-                                            )}
-                                            {msg.role === 'user' ? msg.content : (
-                                                <>
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
-                                                    {msg.streaming && <span className="stream-cursor" />}
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className="message-model-actions" style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                                            {msg.role === 'model' && !msg.streaming && hasPreviewableCode(msg.content) && (
-                                                <button
-                                                    className={`btn-preview-trigger ${previewContent === msg.content ? 'active' : ''}`}
-                                                    style={{ margin: 0 }}
-                                                    onClick={() => setPreviewContent(previewContent === msg.content ? null : msg.content)}
-                                                >
-                                                    {previewContent === msg.content ? '✕ Close Preview' : '▶ Open Preview'}
-                                                </button>
-                                            )}
-                                            {msg.role === 'model' && !msg.streaming && (
-                                                <button
-                                                    className="btn-preview-trigger"
-                                                    style={{ margin: 0 }}
-                                                    title="Scroll to the start of this answer"
-                                                    onClick={() => {
-                                                        const targetId = i > 0 ? `message-${i - 1}` : `message-${i}`;
-                                                        const el = document.getElementById(targetId);
-                                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                    }}
-                                                >
-                                                    ↑ Go to Last Prompt
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="message-time">{formatTime(msg.time)}</div>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {loading && messages[messages.length - 1]?.role !== 'model' && (
-                                <div className="message agent">
-                                    <div className="message-avatar">🤖</div>
-                                    <div className="message-content">
-                                        <div className="thinking-bubble">
-                                            <div className="thinking-dot" /><div className="thinking-dot" /><div className="thinking-dot" />
+                        ) : (
+                            <>
+                                {messages.map((msg, i) => (
+                                    <div key={i} id={`message-${i}`} className={`message ${msg.role === 'user' ? 'user' : 'agent'}`}>
+                                        <div className="message-avatar">{msg.role === 'user' ? userInitial : '🤖'}</div>
+                                        <div className="message-content">
+                                            <div className="message-bubble"
+                                                style={msg.isError ? { borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.05)' } : {}}>
+                                                {/* Show image if user attached one */}
+                                                {msg.imageUrl && (
+                                                    <div className="message-image-wrap">
+                                                        <img src={msg.imageUrl} alt="Attached" className="message-image" />
+                                                    </div>
+                                                )}
+                                                {msg.role === 'user' ? msg.content : (
+                                                    <>
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
+                                                        {msg.streaming && <span className="stream-cursor" />}
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div className="message-model-actions" style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                                {msg.role === 'model' && !msg.streaming && hasPreviewableCode(msg.content) && (
+                                                    <button
+                                                        className={`btn-preview-trigger ${previewContent === msg.content ? 'active' : ''}`}
+                                                        style={{ margin: 0 }}
+                                                        onClick={() => setPreviewContent(previewContent === msg.content ? null : msg.content)}
+                                                    >
+                                                        {previewContent === msg.content ? '✕ Close Preview' : '▶ Open Preview'}
+                                                    </button>
+                                                )}
+                                                {msg.role === 'model' && !msg.streaming && (
+                                                    <button
+                                                        className="btn-preview-trigger"
+                                                        style={{ margin: 0 }}
+                                                        title="Scroll to the start of this answer"
+                                                        onClick={() => {
+                                                            const targetId = i > 0 ? `message-${i - 1}` : `message-${i}`;
+                                                            const el = document.getElementById(targetId);
+                                                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                        }}
+                                                    >
+                                                        ↑ Go to Last Prompt
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="message-time">{formatTime(msg.time)}</div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                ))}
 
-                            {!loading && lastIsAgent && (
-                                <div className="message-actions-row">
-                                    <button className="btn-action" onClick={regenerateLastMessage}>🔄 Regenerate</button>
-                                </div>
-                            )}
-                        </>
-                    )}
-                    <div ref={messagesEndRef} />
+                                {loading && messages[messages.length - 1]?.role !== 'model' && (
+                                    <div className="message agent">
+                                        <div className="message-avatar">🤖</div>
+                                        <div className="message-content">
+                                            <div className="thinking-bubble">
+                                                <div className="thinking-dot" /><div className="thinking-dot" /><div className="thinking-dot" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!loading && lastIsAgent && (
+                                    <div className="message-actions-row" style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                                        <button className="btn-action" onClick={regenerateLastMessage}>🔄 Regenerate</button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        <div ref={messagesEndRef} style={{ height: 1 }} />
+                    </div>
                 </div>
 
                 <div className="chat-input-area">
-                    {/* File preview bar */}
-                    {attachedFile && (
-                        <div className="file-preview-bar">
-                            <img src={attachedFile.previewUrl} alt="preview" className="file-preview-thumb" />
-                            <span className="file-preview-name">{attachedFile.name}</span>
-                            <button className="file-preview-remove" onClick={clearAttachment} title="Remove">✕</button>
-                        </div>
-                    )}
-                    {fileError && <div className="file-error-msg">{fileError}</div>}
-
-                    {/* Template panel */}
-                    {showTemplates && (
-                        <div className="template-panel" ref={templatePanelRef}>
-                            <div className="template-panel-header">
-                                <span>📋 Prompt Templates</span>
-                                <button className="template-close" onClick={() => setShowTemplates(false)}>✕</button>
-                            </div>
-                            <div className="template-scroll">
-                                {PROMPT_TEMPLATES.map(cat => (
-                                    <div key={cat.category} className="template-category">
-                                        <div className="template-category-label">{cat.category}</div>
-                                        {cat.items.map(item => (
-                                            <button
-                                                key={item.label}
-                                                className="template-item"
-                                                onClick={() => applyTemplate(item.prompt)}
-                                            >
-                                                {item.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="input-wrapper">
-                        {/* Hidden file input */}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            ref={fileInputRef}
-                            style={{ display: 'none' }}
-                            onChange={handleFileSelect}
-                        />
-                        {/* Attach button */}
-                        <button
-                            className={`btn-attach ${attachedFile ? 'active' : ''}`}
-                            onClick={() => fileInputRef.current?.click()}
-                            title="Attach image"
-                            disabled={loading}
-                        >
-                            📎
-                        </button>
-                        {/* Templates button */}
-                        <button
-                            className={`btn-templates ${showTemplates ? 'active' : ''}`}
-                            onClick={() => setShowTemplates(s => !s)}
-                            title="Prompt templates"
-                            disabled={loading}
-                        >
-                            📋
-                        </button>
-                        <textarea
-                            ref={textareaRef}
-                            className="chat-textarea"
-                            placeholder="Ask me anything… (Shift+Enter for new line)"
-                            value={input}
-                            onChange={handleTextareaChange}
-                            onKeyDown={handleKeyDown}
-                            rows={1}
-                            disabled={credits === 0 && credits !== 'Unlimited'}
-                        />
-                        {charCount > 0 && (
-                            <div className="char-counter" title={`${charCount} / ${MAX_CHARS}`}>
-                                <svg viewBox="0 0 24 24" width="24" height="24">
-                                    <circle cx="12" cy="12" r="10" fill="none" stroke="var(--border)" strokeWidth="2.5" />
-                                    <circle cx="12" cy="12" r="10" fill="none"
-                                        stroke={isNearLimit ? 'var(--red)' : 'var(--accent)'}
-                                        strokeWidth="2.5"
-                                        strokeDasharray={`${2 * Math.PI * 10}`}
-                                        strokeDashoffset={`${2 * Math.PI * 10 * (1 - charPct / 100)}`}
-                                        strokeLinecap="round"
-                                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', transition: 'stroke-dashoffset 0.2s' }}
-                                    />
-                                </svg>
-                                {isNearLimit && <span className="char-count-num" style={{ color: 'var(--red)' }}>{MAX_CHARS - charCount}</span>}
+                    <div className="chat-container-inner" style={{ position: 'relative', paddingBottom: '10px' }}>
+                        {/* File preview bar */}
+                        {attachedFile && (
+                            <div className="file-preview-bar">
+                                <img src={attachedFile.previewUrl} alt="preview" className="file-preview-thumb" />
+                                <span className="file-preview-name">{attachedFile.name}</span>
+                                <button className="file-preview-remove" onClick={clearAttachment} title="Remove">✕</button>
                             </div>
                         )}
-                        {loading ? (
-                            <button className="btn-stop" onClick={handleStop} title="Stop">⏹</button>
-                        ) : (
-                            <button className="btn-send" onClick={() => sendMessage(input)} disabled={!input.trim() || (credits === 0 && credits !== 'Unlimited')} title="Send">➤</button>
+                        {fileError && <div className="file-error-msg">{fileError}</div>}
+
+                        {/* Template panel */}
+                        {showTemplates && (
+                            <div className="template-panel" ref={templatePanelRef}>
+                                <div className="template-panel-header">
+                                    <span>📋 Prompt Templates</span>
+                                    <button className="template-close" onClick={() => setShowTemplates(false)}>✕</button>
+                                </div>
+                                <div className="template-scroll">
+                                    {PROMPT_TEMPLATES.map(cat => (
+                                        <div key={cat.category} className="template-category">
+                                            <div className="template-category-label">{cat.category}</div>
+                                            {cat.items.map(item => (
+                                                <button
+                                                    key={item.label}
+                                                    className="template-item"
+                                                    onClick={() => applyTemplate(item.prompt)}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         )}
-                    </div>
-                    <div className="input-hint">
-                        {credits === 0 && credits !== 'Unlimited' ? '⚠️ No credits remaining — upgrade to continue'
-                            : loading ? '⏹ Click stop to cancel'
-                                : `${credits === 'Unlimited' ? '∞' : (credits ?? '…')} credit${credits === 1 ? '' : 's'} remaining · Enter to send · 📎 attach image · 📋 templates`}
+
+                        <div className="input-wrapper">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                onChange={handleFileSelect}
+                            />
+                            <button
+                                className={`btn-attach ${attachedFile ? 'active' : ''}`}
+                                onClick={() => fileInputRef.current?.click()}
+                                title="Attach image"
+                                disabled={loading}
+                            >
+                                📎
+                            </button>
+                            <button
+                                className={`btn-templates ${showTemplates ? 'active' : ''}`}
+                                onClick={() => setShowTemplates(s => !s)}
+                                title="Prompt templates"
+                                disabled={loading}
+                            >
+                                📋
+                            </button>
+                            <textarea
+                                ref={textareaRef}
+                                className="chat-textarea"
+                                placeholder="Ask me anything… (Shift+Enter for new line)"
+                                value={input}
+                                onChange={handleTextareaChange}
+                                onKeyDown={handleKeyDown}
+                                rows={1}
+                                disabled={credits === 0 && credits !== 'Unlimited'}
+                            />
+                            {charCount > 0 && (
+                                <div className="char-counter" title={`${charCount} / ${MAX_CHARS}`}>
+                                    <svg viewBox="0 0 24 24" width="24" height="24">
+                                        <circle cx="12" cy="12" r="10" fill="none" stroke="var(--border)" strokeWidth="2.5" />
+                                        <circle cx="12" cy="12" r="10" fill="none"
+                                            stroke={isNearLimit ? 'var(--red)' : 'var(--accent)'}
+                                            strokeWidth="2.5"
+                                            strokeDasharray={`${2 * Math.PI * 10}`}
+                                            strokeDashoffset={`${2 * Math.PI * 10 * (1 - charPct / 100)}`}
+                                            strokeLinecap="round"
+                                            style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', transition: 'stroke-dashoffset 0.2s' }}
+                                        />
+                                    </svg>
+                                    {isNearLimit && <span className="char-count-num" style={{ color: 'var(--red)' }}>{MAX_CHARS - charCount}</span>}
+                                </div>
+                            )}
+                            {loading ? (
+                                <button className="btn-stop" onClick={handleStop} title="Stop">⏹</button>
+                            ) : (
+                                <button className="btn-send" onClick={() => sendMessage(input)} disabled={!input.trim() || (credits === 0 && credits !== 'Unlimited')} title="Send">➤</button>
+                            )}
+                        </div>
+                        <div className="input-hint">
+                            {credits === 0 && credits !== 'Unlimited' ? '⚠️ No credits remaining — upgrade to continue'
+                                : loading ? '⏹ Click stop to cancel'
+                                    : `${credits === 'Unlimited' ? '∞' : (credits ?? '…')} credit${credits === 1 ? '' : 's'} remaining · Enter to send · 📎 attach image · 📋 templates`}
+                        </div>
                     </div>
                 </div>
             </main>
