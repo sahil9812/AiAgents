@@ -123,11 +123,20 @@ export default function ChatPage() {
     useEffect(() => {
         const stored = localStorage.getItem('user');
         if (!stored) { navigate('/auth'); return; }
-        const u = JSON.parse(stored);
-        setUser(u);
-        setCredits(u.credits);
-        fetchLatestCredits();
-        loadConversationList();
+        try {
+            const u = JSON.parse(stored);
+            if (!u || !u.id) throw new Error('Invalid user data');
+            setUser(u);
+            setCredits(u.credits);
+            fetchLatestCredits();
+            loadConversationList();
+        } catch (e) {
+            console.error('Auth error:', e);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/auth');
+            return;
+        }
         // Fetch announcement
         fetch('/api/auth/announcement')
             .then(r => r.json())
@@ -170,11 +179,13 @@ export default function ChatPage() {
     async function fetchLatestCredits() {
         try {
             const res = await api.get('/user/me');
-            const c = res.data.user.credits;
-            setCredits(c);
-            const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, credits: c, role: res.data.user.role }));
-        } catch { }
+            const u = res.data.user; // API returns { user: { ... } }
+            if (u) {
+                setCredits(u.credits);
+                const stored = JSON.parse(localStorage.getItem('user') || '{}');
+                localStorage.setItem('user', JSON.stringify({ ...stored, credits: u.credits, role: u.role }));
+            }
+        } catch (e) { console.error('Failed to fetch credits:', e); }
     }
 
     async function loadConversationList() {

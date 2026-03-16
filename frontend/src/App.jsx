@@ -10,27 +10,44 @@ import LandingPage from './pages/LandingPage';
 import WebCreatorPage from './pages/WebCreatorPage';
 
 function PrivateRoute({ children }) {
-  return localStorage.getItem('token') ? children : <Navigate to="/auth" replace />;
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  return (token && user) ? children : <Navigate to="/auth" replace />;
 }
 
 function PublicRoute({ children }) {
-  return localStorage.getItem('token') ? <Navigate to="/chat" replace /> : children;
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  return (token && user) ? <Navigate to="/chat" replace /> : children;
 }
 
 function AdminLoginRoute({ children }) {
   const token = localStorage.getItem('token');
-  if (token) {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/chat" replace />;
+  const userStr = localStorage.getItem('user');
+  if (token && userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      return user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/chat" replace />;
+    } catch (e) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
   }
   return children;
 }
 
 function AdminRoute({ children }) {
   const token = localStorage.getItem('token');
-  if (!token) return <Navigate to="/admin-login" replace />;
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  return user.role === 'admin' ? children : <Navigate to="/chat" replace />;
+  const userStr = localStorage.getItem('user');
+  if (!token || !userStr) return <Navigate to="/admin-login" replace />;
+  try {
+    const user = JSON.parse(userStr);
+    return user.role === 'admin' ? children : <Navigate to="/chat" replace />;
+  } catch (e) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to="/admin-login" replace />;
+  }
 }
 
 export default function App() {
