@@ -55,7 +55,14 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const API_BASE = '/api';
 
 function formatTime(date) {
-    return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!date) return '';
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        return '';
+    }
 }
 
 function makeMarkdownComponents() {
@@ -80,6 +87,7 @@ export default function ChatPage() {
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(null);
     const [maxCredits] = useState(4);
+    const [pageLoading, setPageLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
     const [previewContent, setPreviewContent] = useState(null);
@@ -121,8 +129,15 @@ export default function ChatPage() {
     }, [theme]);
 
     useEffect(() => {
-        const stored = localStorage.getItem('user');
-        if (!stored) { navigate('/auth'); return; }
+        const stored = (() => {
+            try { return localStorage.getItem('user'); } catch { return null; }
+        })();
+
+        if (!stored) {
+            navigate('/auth');
+            return;
+        }
+
         try {
             const u = JSON.parse(stored);
             if (!u || !u.id) throw new Error('Invalid user data');
@@ -131,12 +146,17 @@ export default function ChatPage() {
             fetchLatestCredits();
             loadConversationList();
         } catch (e) {
-            console.error('Auth error:', e);
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            console.error('Auth check failed:', e);
+            try {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            } catch { }
             navigate('/auth');
             return;
+        } finally {
+            setPageLoading(false);
         }
+
         // Fetch announcement
         fetch('/api/auth/announcement')
             .then(r => r.json())
@@ -470,6 +490,16 @@ export default function ChatPage() {
     const hasMessages = messages.length > 0;
     const lastIsAgent = messages.length > 0 && messages[messages.length - 1]?.role === 'model' && !messages[messages.length - 1]?.streaming;
     const displayedSessions = searchResults !== null ? searchResults : chatSessions;
+
+    if (pageLoading) {
+        return (
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'white' }}>
+                <div className="thinking-bubble">
+                    <div className="thinking-dot" /><div className="thinking-dot" /><div className="thinking-dot" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`chat-layout ${sidebarOpen ? 'sidebar-open' : ''}`}>

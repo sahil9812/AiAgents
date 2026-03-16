@@ -68,6 +68,7 @@ body {
 
 #root {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -392,7 +393,9 @@ body {
 .chat-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  position: relative;
 }
 
 /* Sidebar */
@@ -732,6 +735,8 @@ body {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-primary);
+  min-height: 0;
+  width: 100%;
 }
 
 .chat-header {

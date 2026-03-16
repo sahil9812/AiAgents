@@ -9,21 +9,31 @@ import UpgradePage from './pages/UpgradePage';
 import LandingPage from './pages/LandingPage';
 import WebCreatorPage from './pages/WebCreatorPage';
 
+// Helper for safe localStorage access
+const getStored = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    console.error(`localStorage access denied for ${key}:`, e);
+    return null;
+  }
+};
+
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
+  const token = getStored('token');
+  const user = getStored('user');
   return (token && user) ? children : <Navigate to="/auth" replace />;
 }
 
 function PublicRoute({ children }) {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
+  const token = getStored('token');
+  const user = getStored('user');
   return (token && user) ? <Navigate to="/chat" replace /> : children;
 }
 
 function AdminLoginRoute({ children }) {
-  const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
+  const token = getStored('token');
+  const userStr = getStored('user');
   if (token && userStr) {
     try {
       const user = JSON.parse(userStr);
@@ -37,8 +47,8 @@ function AdminLoginRoute({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
+  const token = getStored('token');
+  const userStr = getStored('user');
   if (!token || !userStr) return <Navigate to="/admin-login" replace />;
   try {
     const user = JSON.parse(userStr);
