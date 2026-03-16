@@ -1487,7 +1487,7 @@ body {
   }
 
   .message-content {
-    max-width: 90%;
+    max-width: 100%;
   }
 
   .chat-welcome {
