@@ -305,6 +305,7 @@ export default function WebCreatorPage() {
 
     // UI
     const historyEndRef = useRef(null);
+    const [leftPanelOpen, setLeftPanelOpen] = useState(false);
 
     // Suggestions
     const [suggestions, setSuggestions] = useState([
@@ -678,31 +679,42 @@ export default function WebCreatorPage() {
                 zIndex: 10, minHeight: 52, flexShrink: 0,
             }}>
                 {/* Branding */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 6, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>✦</div>
-                    <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
-                            {currentProject ? currentProject.name : 'AI Web Builder'}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#9ca3af' }}>
-                            {currentProject ? `Project · ${currentProject.model}` : 'No project open'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button 
+                        onClick={() => setLeftPanelOpen(!leftPanelOpen)}
+                        className="show-mobile"
+                        style={{ background: 'none', border: 'none', color: '#111827', fontSize: 18, cursor: 'pointer', padding: 0 }}
+                    >
+                        {leftPanelOpen ? '✕' : '☰'}
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 6, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>✦</div>
+                        <div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+                                {currentProject ? currentProject.name : 'AI Web Builder'}
+                            </div>
+                            <div style={{ fontSize: 10, color: '#9ca3af' }}>
+                                {currentProject ? `Project · ${currentProject.model}` : 'No project open'}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Center: Model selector + View toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <ModelSelector selectedModel={selectedModel} onChange={setSelectedModel} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className="hidden-mobile">
+                        <ModelSelector selectedModel={selectedModel} onChange={setSelectedModel} />
+                    </div>
                     <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 20, padding: 3, gap: 2, border: '1px solid #e5e7eb' }}>
                         {[{ id: 'preview', icon: '👁', label: 'Preview' }, { id: 'explorer', icon: '</>', label: 'Code' }].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                                 style={{
-                                    padding: '4px 12px', borderRadius: 16, border: 'none', cursor: 'pointer',
-                                    fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
+                                    padding: '4px 10px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                                    fontSize: 11, fontWeight: 500, transition: 'all 0.15s',
                                     background: activeTab === tab.id ? '#ffffff' : 'transparent',
                                     color: activeTab === tab.id ? '#111827' : '#6b7280',
-                                    boxShadow: activeTab === tab.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                                }}>{tab.icon} {tab.label}</button>
+                                    boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                }}>{tab.icon} <span className="hidden-mobile">{tab.label}</span></button>
                         ))}
                     </div>
                 </div>
@@ -724,10 +736,18 @@ export default function WebCreatorPage() {
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
                 {/* ── Left Panel: Chat + Projects ── */}
-                <div style={{
-                    width: 300, minWidth: 260, maxWidth: 380, display: 'flex', flexDirection: 'column',
-                    borderRight: '1px solid #e5e7eb', background: '#fafafa', flexShrink: 0, overflow: 'hidden',
-                }}>
+                <div 
+                    className={`creator-sidebar ${leftPanelOpen ? 'open' : ''}`}
+                    style={{
+                        width: 300, minWidth: 260, maxWidth: 380, display: 'flex', flexDirection: 'column',
+                        borderRight: '1px solid #e5e7eb', background: '#fafafa', flexShrink: 0, overflow: 'hidden',
+                        zIndex: 50,
+                    }}
+                >
+                    {/* Mobile Model Selector */}
+                    <div className="show-mobile creator-model-selector">
+                        <ModelSelector selectedModel={selectedModel} onChange={setSelectedModel} />
+                    </div>
                     {/* Project panel */}
                     <ProjectPanel
                         currentProject={currentProject}

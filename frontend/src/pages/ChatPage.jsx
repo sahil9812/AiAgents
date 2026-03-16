@@ -524,7 +524,22 @@ export default function ChatPage() {
                     </div>
 
                     <div className="sidebar-divider" />
-                    <div className="sidebar-section-label">Agent</div>
+                    <div className="sidebar-section-label">Agent Settings</div>
+                    <div className="show-mobile" style={{ padding: '0 4px 10px' }}>
+                        <div style={{ display: 'flex', background: 'var(--bg-card)', borderRadius: 20, padding: 3, gap: 2, border: '1px solid var(--border)' }}>
+                            {[{ id: 'gemini', label: '✦ Gemini', color: '#4285f4' }, { id: 'deepseek', label: '◈ DeepSeek', color: '#10a37f' }].map(m => (
+                                <button key={m.id}
+                                    onClick={() => { setSelectedModel(m.id); localStorage.setItem('chatModel', m.id); }}
+                                    style={{
+                                        flex: 1, padding: '6px 0', borderRadius: 16, border: 'none', cursor: 'pointer',
+                                        fontSize: 11, fontWeight: 500, transition: 'all 0.15s',
+                                        background: selectedModel === m.id ? m.color : 'transparent',
+                                        color: selectedModel === m.id ? '#fff' : 'var(--text-muted)',
+                                    }}
+                                >{m.label}</button>
+                            ))}
+                        </div>
+                    </div>
                     <div className="agent-badge">
                         <div className="agent-badge-icon">✨</div>
                         <div className="agent-badge-info">
@@ -579,9 +594,9 @@ export default function ChatPage() {
                     <button className="btn-hamburger" onClick={() => setSidebarOpen(o => !o)}>{sidebarOpen ? '✕' : '☰'}</button>
                     <div className="status-dot" />
                     <div className="chat-header-title">Senior AI Coding Agent</div>
-                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {/* Model Selector */}
-                        <div style={{ display: 'flex', background: 'var(--bg-2, #f3f4f6)', borderRadius: 20, padding: 3, gap: 2, border: '1px solid var(--border, #e5e7eb)' }}>
+                        <div className="hidden-mobile" style={{ display: 'flex', background: 'var(--bg-2, #f3f4f6)', borderRadius: 20, padding: 3, gap: 2, border: '1px solid var(--border, #e5e7eb)' }}>
                             {[{ id: 'gemini', label: '✦ Gemini', color: '#4285f4' }, { id: 'deepseek', label: '◈ DeepSeek', color: '#10a37f' }].map(m => (
                                 <button key={m.id}
                                     onClick={() => { setSelectedModel(m.id); localStorage.setItem('chatModel', m.id); }}
@@ -594,8 +609,13 @@ export default function ChatPage() {
                                 >{m.label}</button>
                             ))}
                         </div>
+                        {/* Alternative Mobile Selector Icon or simplified version could go here if needed, 
+                            but for now let's just make the existing one fit better or show in sidebar */}
                         {hasMessages && (
-                            <button className="btn-header-new-chat" onClick={handleNewChat} disabled={loading} title="New chat">✏️ New Chat</button>
+                            <button className="btn-header-new-chat" onClick={handleNewChat} disabled={loading} title="New chat">
+                                <span className="hidden-mobile">✏️ New Chat</span>
+                                <span className="show-mobile">✏️</span>
+                            </button>
                         )}
                     </div>
                 </div>
