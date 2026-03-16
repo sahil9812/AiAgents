@@ -105,8 +105,9 @@ export default function ChatPage() {
 
     // File upload
     const [attachedFile, setAttachedFile] = useState(null); // { file, previewUrl, name }
-    const [fileError, setFileError] = useState('');
-    const fileInputRef = useRef(null);
+    // Plus menu
+    const [showPlusMenu, setShowPlusMenu] = useState(false);
+    const plusMenuRef = useRef(null);
 
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
@@ -154,6 +155,17 @@ export default function ChatPage() {
         if (showTemplates) document.addEventListener('mousedown', handleClick);
         return () => document.removeEventListener('mousedown', handleClick);
     }, [showTemplates]);
+
+    // Close plus menu on outside click
+    useEffect(() => {
+        function handleClick(e) {
+            if (plusMenuRef.current && !plusMenuRef.current.contains(e.target)) {
+                setShowPlusMenu(false);
+            }
+        }
+        if (showPlusMenu) document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [showPlusMenu]);
 
     async function fetchLatestCredits() {
         try {
@@ -724,6 +736,76 @@ export default function ChatPage() {
                         )}
                         {fileError && <div className="file-error-msg">{fileError}</div>}
 
+                        <div className="input-row-outer">
+                            {/* Circular Plus Button */}
+                            <div className="plus-menu-container" ref={plusMenuRef}>
+                                <button 
+                                    className={`btn-plus ${showPlusMenu ? 'active' : ''}`}
+                                    onClick={() => setShowPlusMenu(s => !s)}
+                                    title="Attachments & Actions"
+                                >
+                                    <span>+</span>
+                                </button>
+                                
+                                {showPlusMenu && (
+                                    <div className="plus-menu-dropdown">
+                                        <button className="plus-menu-item" onClick={() => { fileInputRef.current?.click(); setShowPlusMenu(false); }}>
+                                            <span className="plus-item-icon">🖼️</span>
+                                            <span className="plus-item-label">Upload Image</span>
+                                        </button>
+                                        <button className="plus-menu-item" onClick={() => { setShowTemplates(true); setShowPlusMenu(false); }}>
+                                            <span className="plus-item-icon">📋</span>
+                                            <span className="plus-item-label">Prompt Templates</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pill-shaped Input Wrapper */}
+                            <div className="input-wrapper-pill">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleFileSelect}
+                                />
+                                
+                                <textarea
+                                    ref={textareaRef}
+                                    className="chat-textarea"
+                                    placeholder="Ask me anything…"
+                                    value={input}
+                                    onChange={handleTextareaChange}
+                                    onKeyDown={handleKeyDown}
+                                    rows={1}
+                                    disabled={credits === 0 && credits !== 'Unlimited'}
+                                />
+                                
+                                {charCount > 0 && (
+                                    <div className="char-counter" title={`${charCount} / ${MAX_CHARS}`}>
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <circle cx="12" cy="12" r="10" fill="none" stroke="var(--border)" strokeWidth="2.5" />
+                                            <circle cx="12" cy="12" r="10" fill="none"
+                                                stroke={isNearLimit ? 'var(--red)' : 'var(--accent)'}
+                                                strokeWidth="2.5"
+                                                strokeDasharray={`${2 * Math.PI * 10}`}
+                                                strokeDashoffset={`${2 * Math.PI * 10 * (1 - charPct / 100)}`}
+                                                strokeLinecap="round"
+                                                style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', transition: 'stroke-dashoffset 0.2s' }}
+                                            />
+                                        </svg>
+                                    </div>
+                                )}
+                                
+                                {loading ? (
+                                    <button className="btn-send-pill stop" onClick={handleStop} title="Stop">⏹</button>
+                                ) : (
+                                    <button className="btn-send-pill" onClick={() => sendMessage(input)} disabled={!input.trim() || (credits === 0 && credits !== 'Unlimited')} title="Send">➤</button>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Template panel */}
                         {showTemplates && (
                             <div className="template-panel" ref={templatePanelRef}>
@@ -750,66 +832,10 @@ export default function ChatPage() {
                             </div>
                         )}
 
-                        <div className="input-wrapper">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                ref={fileInputRef}
-                                style={{ display: 'none' }}
-                                onChange={handleFileSelect}
-                            />
-                            <button
-                                className={`btn-attach ${attachedFile ? 'active' : ''}`}
-                                onClick={() => fileInputRef.current?.click()}
-                                title="Attach image"
-                                disabled={loading}
-                            >
-                                📎
-                            </button>
-                            <button
-                                className={`btn-templates ${showTemplates ? 'active' : ''}`}
-                                onClick={() => setShowTemplates(s => !s)}
-                                title="Prompt templates"
-                                disabled={loading}
-                            >
-                                📋
-                            </button>
-                            <textarea
-                                ref={textareaRef}
-                                className="chat-textarea"
-                                placeholder="Ask me anything… (Shift+Enter for new line)"
-                                value={input}
-                                onChange={handleTextareaChange}
-                                onKeyDown={handleKeyDown}
-                                rows={1}
-                                disabled={credits === 0 && credits !== 'Unlimited'}
-                            />
-                            {charCount > 0 && (
-                                <div className="char-counter" title={`${charCount} / ${MAX_CHARS}`}>
-                                    <svg viewBox="0 0 24 24" width="24" height="24">
-                                        <circle cx="12" cy="12" r="10" fill="none" stroke="var(--border)" strokeWidth="2.5" />
-                                        <circle cx="12" cy="12" r="10" fill="none"
-                                            stroke={isNearLimit ? 'var(--red)' : 'var(--accent)'}
-                                            strokeWidth="2.5"
-                                            strokeDasharray={`${2 * Math.PI * 10}`}
-                                            strokeDashoffset={`${2 * Math.PI * 10 * (1 - charPct / 100)}`}
-                                            strokeLinecap="round"
-                                            style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', transition: 'stroke-dashoffset 0.2s' }}
-                                        />
-                                    </svg>
-                                    {isNearLimit && <span className="char-count-num" style={{ color: 'var(--red)' }}>{MAX_CHARS - charCount}</span>}
-                                </div>
-                            )}
-                            {loading ? (
-                                <button className="btn-stop" onClick={handleStop} title="Stop">⏹</button>
-                            ) : (
-                                <button className="btn-send" onClick={() => sendMessage(input)} disabled={!input.trim() || (credits === 0 && credits !== 'Unlimited')} title="Send">➤</button>
-                            )}
-                        </div>
                         <div className="input-hint">
-                            {credits === 0 && credits !== 'Unlimited' ? '⚠️ No credits remaining — upgrade to continue'
+                            {credits === 0 && credits !== 'Unlimited' ? '⚠️ No credits remaining'
                                 : loading ? '⏹ Click stop to cancel'
-                                    : `${credits === 'Unlimited' ? '∞' : (credits ?? '…')} credit${credits === 1 ? '' : 's'} remaining · Enter to send · 📎 attach image · 📋 templates`}
+                                    : `${credits === 'Unlimited' ? '∞' : (credits ?? '…')} credit${credits === 1 ? '' : 's'} remaining · 📎 attach image · 📋 templates`}
                         </div>
                     </div>
                 </div>
