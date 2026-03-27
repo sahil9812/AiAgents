@@ -95,8 +95,8 @@ export default function ChatPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [announcement, setAnnouncement] = useState('');
     const [announcementDismissed, setAnnouncementDismissed] = useState(false);
-    const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('chatModel') || 'gemini');
-    const [selectedBot, setSelectedBot] = useState(() => localStorage.getItem('botType') || 'coding');
+    const [selectedModel, setSelectedModel] = useState('deepseek');
+    const [selectedBot, setSelectedBot] = useState('general');
 
     // Chat history
     const [chatSessions, setChatSessions] = useState([]);
@@ -267,6 +267,8 @@ export default function ChatPage() {
         setActiveConvId(null);
         setMessages([]);
         setInput('');
+        setSelectedBot('general');
+        setSelectedModel('deepseek');
         setShowNoCreditsModal(false);
         setLoading(false);
         setPreviewContent(null);
