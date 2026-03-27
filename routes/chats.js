@@ -9,7 +9,7 @@ router.use(authMiddleware);
 // GET /api/chats — list user's conversations (newest first)
 router.get('/', (req, res) => {
     const conversations = db.prepare(`
-    SELECT id, title, created_at, updated_at
+    SELECT id, title, bot_type, created_at, updated_at
     FROM conversations
     WHERE user_id = ?
     ORDER BY updated_at DESC
@@ -24,7 +24,7 @@ router.get('/search', (req, res) => {
     if (!q || q.length < 2) return res.json({ conversations: [] });
     const like = `%${q}%`;
     const conversations = db.prepare(`
-        SELECT DISTINCT c.id, c.title, c.created_at, c.updated_at
+        SELECT DISTINCT c.id, c.title, c.bot_type, c.created_at, c.updated_at
         FROM conversations c
         LEFT JOIN messages m ON m.conversation_id = c.id
         WHERE c.user_id = ?

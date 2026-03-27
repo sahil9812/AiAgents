@@ -16,7 +16,7 @@ const upload = multer({
     },
 });
 
-const SYSTEM_PROMPT = `You are a senior AI Coding and Task Automation Agent powered by Google Gemini.
+const CODING_SYSTEM_PROMPT = `You are a senior AI Coding and Task Automation Agent powered by Google Gemini.
 You assist authenticated users in solving programming problems, generating code, debugging, researching topics, and automating technical tasks.
 
 OPERATING RULES:
@@ -52,6 +52,22 @@ SECURITY & QUALITY STANDARDS:
 
 You are a professional AI agent delivering real value in a paid product.`;
 
+const GENERAL_SYSTEM_PROMPT = `You are a helpful, versatile, and general-purpose Chat Bot.
+You assist authenticated users in answering questions on a wide variety of topics, providing explanations, brainstorming ideas, and engaging in friendly conversation.
+
+OPERATING RULES:
+1. Understand the user's intent before responding.
+2. Be polite, helpful, and concise.
+3. Provide accurate information to the best of your knowledge.
+4. Refuse to answer dangerous, illegal, or harmful queries. Explain your refusal politely.
+5. If requirements are unclear, ask for clarification.
+
+OUTPUT FORMAT:
+- Use clear formatting with Markdown when necessary.
+- Be structured and easy to read.
+
+You are a professional AI Chat Bot delivering real value.`;
+
 // POST /api/agent/chat — SSE streaming response (supports optional image upload)
 router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
     // Only run multer if this is a multipart request (image upload)
@@ -64,6 +80,7 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
     const message = req.body.message;
     const conversationId = req.body.conversationId;
     const model = req.body.model || 'gemini'; // 'gemini' | 'deepseek'
+    const botType = req.body.botType || 'coding'; // 'coding' | 'general'
     const selectedModel = ['gemini', 'deepseek'].includes(model) ? model : 'gemini';
     // For JSON requests, history is already parsed. For FormData, it's a string.
     const historyRaw = typeof req.body.history === 'string'
@@ -93,15 +110,16 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
     let isNewChat = !conversationId;
 
     if (isNewChat) {
-        const result = db.prepare('INSERT INTO conversations (user_id, title) VALUES (?, ?)').run(req.user.id, 'New Chat');
+        const result = db.prepare('INSERT INTO conversations (user_id, title, bot_type) VALUES (?, ?, ?)').run(req.user.id, 'New Chat', botType);
         convId = result.lastInsertRowid;
-        send({ type: 'conversation', conversationId: convId, title: 'New Chat' });
+        send({ type: 'conversation', conversationId: convId, title: 'New Chat', botType });
     } else {
         const conv = db.prepare('SELECT id FROM conversations WHERE id = ? AND user_id = ?').get(convId, req.user.id);
         if (!conv) {
             send({ type: 'error', error: 'Conversation not found.' });
             return res.end();
         }
+        db.prepare('UPDATE conversations SET bot_type = ? WHERE id = ?').run(botType, convId);
     }
 
     // Save user message (store image indicator in content if present)
@@ -131,7 +149,7 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
         await aiService.stream({
             model: effectiveModel,
             prompt: geminiImageParts || message.trim(),
-            systemPrompt: SYSTEM_PROMPT,
+            systemPrompt: botType === 'general' ? GENERAL_SYSTEM_PROMPT : CODING_SYSTEM_PROMPT,
             history,
             onChunk: (text) => {
                 fullResponse += text;

@@ -49,10 +49,14 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL DEFAULT 'New Chat',
+    bot_type TEXT NOT NULL DEFAULT 'coding',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+const existingConvCols = db.prepare("PRAGMA table_info(conversations)").all().map(c => c.name);
+if (!existingConvCols.includes('bot_type')) db.exec("ALTER TABLE conversations ADD COLUMN bot_type TEXT NOT NULL DEFAULT 'coding'");
 
 // ── Messages ──────────────────────────────────────────────────────────────────
 db.exec(`

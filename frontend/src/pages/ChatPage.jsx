@@ -96,6 +96,7 @@ export default function ChatPage() {
     const [announcement, setAnnouncement] = useState('');
     const [announcementDismissed, setAnnouncementDismissed] = useState(false);
     const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('chatModel') || 'gemini');
+    const [selectedBot, setSelectedBot] = useState(() => localStorage.getItem('botType') || 'coding');
 
     // Chat history
     const [chatSessions, setChatSessions] = useState([]);
@@ -129,6 +130,10 @@ export default function ChatPage() {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    useEffect(() => {
+        localStorage.setItem('botType', selectedBot);
+    }, [selectedBot]);
 
     useEffect(() => {
         const stored = (() => {
@@ -248,6 +253,9 @@ export default function ChatPage() {
         try {
             const res = await api.get(`/chats/${conv.id}`);
             setActiveConvId(conv.id);
+            if (res.data.conversation && res.data.conversation.bot_type) {
+                setSelectedBot(res.data.conversation.bot_type);
+            }
             setMessages(res.data.messages.map(m => ({ ...m, time: m.created_at })));
             setPreviewContent(null);
         } catch { }
@@ -359,6 +367,7 @@ export default function ChatPage() {
                 formData.append('history', JSON.stringify(messages.slice(-10).map(m => ({ role: m.role, content: m.content }))));
                 formData.append('image', currentFile.file);
                 formData.append('model', 'gemini'); // force Gemini for image uploads
+                formData.append('botType', selectedBot);
                 fetchOptions = {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
@@ -373,6 +382,7 @@ export default function ChatPage() {
                         message: msg,
                         conversationId: activeConvId,
                         model: selectedModel,
+                        botType: selectedBot,
                         history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
                     }),
                     signal: abortControllerRef.current.signal,
@@ -408,10 +418,11 @@ export default function ChatPage() {
 
                         if (event.type === 'conversation') {
                             setActiveConvId(event.conversationId);
+                            if (event.botType) setSelectedBot(event.botType);
                             setChatSessions(prev => {
                                 const exists = prev.find(s => s.id === event.conversationId);
                                 if (exists) return prev;
-                                return [{ id: event.conversationId, title: event.title, updated_at: new Date().toISOString() }, ...prev];
+                                return [{ id: event.conversationId, title: event.title, bot_type: event.botType, updated_at: new Date().toISOString() }, ...prev];
                             });
                         }
                         if (event.type === 'chunk') {
@@ -605,7 +616,7 @@ export default function ChatPage() {
                     <div className="agent-badge">
                         <div className="agent-badge-icon">✨</div>
                         <div className="agent-badge-info">
-                            <div className="agent-badge-name">General Assistant</div>
+                            <div className="agent-badge-name">{selectedBot === 'coding' ? 'Senior Agent' : 'Chat Bot'}</div>
                             <div className="agent-badge-model">AI Agent</div>
                         </div>
                     </div>
@@ -655,7 +666,29 @@ export default function ChatPage() {
                 <div className="chat-header">
                     <button className="btn-hamburger" onClick={() => setSidebarOpen(o => !o)}>{sidebarOpen ? '✕' : '☰'}</button>
                     <div className="status-dot" />
-                    <div className="chat-header-title">Senior AI Coding Agent</div>
+                    <select
+                        className="chat-header-title"
+                        value={selectedBot}
+                        onChange={(e) => setSelectedBot(e.target.value)}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'inherit',
+                            fontSize: 'inherit',
+                            fontWeight: 'inherit',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            appearance: 'none',
+                            fontFamily: 'inherit',
+                            padding: 0,
+                            margin: 0
+                        }}
+                    >
+                        <option value="coding" style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>Senior AI Coding Agent</option>
+                        <option value="general" style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>Chat Bot</option>
+                    </select>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {/* Model Selector */}
                         <div className="hidden-mobile" style={{ display: 'flex', background: 'var(--bg-2, #f3f4f6)', borderRadius: 20, padding: 3, gap: 2, border: '1px solid var(--border, #e5e7eb)' }}>
@@ -688,7 +721,11 @@ export default function ChatPage() {
                             <div className="chat-welcome">
                                 <div className="chat-welcome-icon">🤖</div>
                                 <h2>How can I help you today?</h2>
-                                <p>I'm your AI Coding &amp; Task Automation Agent. Write code, debug errors, explain concepts, or automate tasks.</p>
+                                <p>
+                                    {selectedBot === 'coding' 
+                                        ? "I'm your AI Coding & Task Automation Agent. Write code, debug errors, explain concepts, or automate tasks."
+                                        : "I'm your friendly Chat Bot. Ask me anything, brainstorm ideas, or just chat."}
+                                </p>
                                 <div className="welcome-chips">
                                     {SUGGESTIONS.map(s => (
                                         <button key={s} className="welcome-chip" onClick={() => sendMessage(s)}>{s}</button>
