@@ -686,8 +686,8 @@ export default function ChatPage() {
                             margin: 0
                         }}
                     >
-                        <option value="coding" style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>Senior AI Coding Agent</option>
-                        <option value="general" style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>Chat Bot</option>
+                        <option value="coding" style={{ color: '#000', background: '#fff' }}>Senior AI Coding Agent</option>
+                        <option value="general" style={{ color: '#000', background: '#fff' }}>Chat Bot</option>
                     </select>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {/* Model Selector */}
