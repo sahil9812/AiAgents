@@ -589,7 +589,7 @@ export default function ChatPage() {
                     <div className="sidebar-section-label">Agent Settings</div>
                     <div className="show-mobile" style={{ padding: '0 4px 10px' }}>
                         <div style={{ display: 'flex', background: 'var(--bg-card)', borderRadius: 20, padding: 3, gap: 2, border: '1px solid var(--border)' }}>
-                            {[{ id: 'gemini', label: '✦ Gemini', color: '#4285f4' }, { id: 'deepseek', label: '◈ DeepSeek', color: '#10a37f' }].map(m => (
+                            {[{ id: 'gemini', label: '✦ AI Agent', color: '#4285f4' }, { id: 'deepseek', label: '◈ DeepSeek', color: '#10a37f' }].map(m => (
                                 <button key={m.id}
                                     onClick={() => { setSelectedModel(m.id); localStorage.setItem('chatModel', m.id); }}
                                     style={{
@@ -606,7 +606,7 @@ export default function ChatPage() {
                         <div className="agent-badge-icon">✨</div>
                         <div className="agent-badge-info">
                             <div className="agent-badge-name">General Assistant</div>
-                            <div className="agent-badge-model">Gemini 2.5 Flash-Lite</div>
+                            <div className="agent-badge-model">AI Agent</div>
                         </div>
                     </div>
 
@@ -659,7 +659,7 @@ export default function ChatPage() {
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {/* Model Selector */}
                         <div className="hidden-mobile" style={{ display: 'flex', background: 'var(--bg-2, #f3f4f6)', borderRadius: 20, padding: 3, gap: 2, border: '1px solid var(--border, #e5e7eb)' }}>
-                            {[{ id: 'gemini', label: '✦ Gemini', color: '#4285f4' }, { id: 'deepseek', label: '◈ DeepSeek', color: '#10a37f' }].map(m => (
+                            {[{ id: 'gemini', label: '✦ AI Agent', color: '#4285f4' }, { id: 'deepseek', label: '◈ DeepSeek', color: '#10a37f' }].map(m => (
                                 <button key={m.id}
                                     onClick={() => { setSelectedModel(m.id); localStorage.setItem('chatModel', m.id); }}
                                     style={{
