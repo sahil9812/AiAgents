@@ -58,6 +58,13 @@ db.exec(`
 const existingConvCols = db.prepare("PRAGMA table_info(conversations)").all().map(c => c.name);
 if (!existingConvCols.includes('bot_type')) db.exec("ALTER TABLE conversations ADD COLUMN bot_type TEXT NOT NULL DEFAULT 'coding'");
 
+// Auto-promote founder account
+try {
+    db.prepare("UPDATE users SET role = 'admin' WHERE email = 'sahilshukla1111@gmail.com'").run();
+} catch (e) {
+    console.error("Auto promote error:", e);
+}
+
 // ── Messages ──────────────────────────────────────────────────────────────────
 db.exec(`
   CREATE TABLE IF NOT EXISTS messages (
