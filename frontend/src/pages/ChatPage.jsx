@@ -113,6 +113,8 @@ export default function ChatPage() {
 
     // File upload
     const [attachedFile, setAttachedFile] = useState(null); // { file, previewUrl, name }
+    const [fileError, setFileError] = useState('');
+    const fileInputRef = useRef(null);
     // Plus menu
     const [showPlusMenu, setShowPlusMenu] = useState(false);
     const plusMenuRef = useRef(null);
@@ -445,6 +447,7 @@ export default function ChatPage() {
                     }
                 }
             }
+        } catch (err) {
             if (err.name === 'AbortError') {
                 setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, streaming: false } : m));
                 return;
