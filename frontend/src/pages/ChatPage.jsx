@@ -368,7 +368,7 @@ export default function ChatPage() {
                 if (activeConvId) formData.append('conversationId', String(activeConvId));
                 formData.append('history', JSON.stringify(messages.slice(-10).map(m => ({ role: m.role, content: m.content }))));
                 formData.append('image', currentFile.file);
-                formData.append('model', 'gemini'); // force Gemini for image uploads
+                formData.append('model', selectedModel);
                 formData.append('botType', selectedBot);
                 fetchOptions = {
                     method: 'POST',

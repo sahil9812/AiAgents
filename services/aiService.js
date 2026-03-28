@@ -67,7 +67,7 @@ async function streamDeepSeek({ prompt, systemPrompt, history = [], onChunk, onD
                 messages.push({ role, content: msg.content || msg.text || '' });
             }
         }
-        messages.push({ role: 'user', content: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) });
+        messages.push({ role: 'user', content: typeof prompt === 'string' ? prompt : prompt });
 
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',

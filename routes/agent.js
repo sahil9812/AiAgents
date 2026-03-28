@@ -134,21 +134,28 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
         // ── Stream response ───────────────────────────────────────────────────
         let fullResponse = '';
 
-        // If image attached, force Gemini (DeepSeek doesn't support vision in this integration)
-        const effectiveModel = imageFile ? 'gemini' : selectedModel;
+        // Ensure the correct effective model is used regardless of image presence
+        const effectiveModel = selectedModel;
 
-        // Build parts for Gemini if image attached
-        let geminiImageParts = undefined;
+        // Build parts for models if image attached
+        let runPrompt = message.trim();
         if (imageFile) {
-            geminiImageParts = [
-                { inlineData: { mimeType: imageFile.mimetype, data: imageFile.buffer.toString('base64') } },
-                { text: message.trim() },
-            ];
+            if (effectiveModel === 'gemini') {
+                runPrompt = [
+                    { inlineData: { mimeType: imageFile.mimetype, data: imageFile.buffer.toString('base64') } },
+                    { text: message.trim() },
+                ];
+            } else if (effectiveModel === 'deepseek') {
+                runPrompt = [
+                    { type: 'text', text: message.trim() },
+                    { type: 'image_url', image_url: { url: `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}` } }
+                ];
+            }
         }
 
         await aiService.stream({
             model: effectiveModel,
-            prompt: geminiImageParts || message.trim(),
+            prompt: runPrompt,
             systemPrompt: botType === 'general' ? GENERAL_SYSTEM_PROMPT : CODING_SYSTEM_PROMPT,
             history,
             onChunk: (text) => {
