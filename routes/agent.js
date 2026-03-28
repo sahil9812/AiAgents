@@ -146,10 +146,9 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
                     { text: message.trim() },
                 ];
             } else if (effectiveModel === 'deepseek') {
-                runPrompt = [
-                    { type: 'text', text: message.trim() },
-                    { type: 'image_url', image_url: { url: `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}` } }
-                ];
+                // The deepseek-chat API does not support vision (image_url). 
+                // We fallback to sending only the text so the app doesn't crash 400.
+                runPrompt = message.trim() + "\n\n[System Note: The user attached an image to this message, but you are a text-only model and cannot see it. Please politely decline visual requests and answer the text portion as best you can.]";
             }
         }
 
