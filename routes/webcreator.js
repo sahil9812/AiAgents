@@ -108,7 +108,8 @@ IMPORTANT
 ========================
 
 Never regenerate the full project unless the user explicitly asks to "rebuild entire project".
-Always prioritize editing existing files.`;
+Always prioritize editing existing files.
+Output ONLY the raw JSON object. Do not include any introductory or summary text. Do not wrap in markdown unless strictly necessary (but the system will clean it). Your entire response must be a valid JSON object.`;
 
 router.post('/generate', authMiddleware, creditsMiddleware, async (req, res) => {
     try {
@@ -151,28 +152,53 @@ router.post('/generate', authMiddleware, creditsMiddleware, async (req, res) => 
                 send({ type: 'chunk', text });
             },
             onDone: async () => {
-                // Validate + parse JSON
+                // Robust AI JSON Parser
                 let parsedJson;
                 try {
-                    let cleanText = fullResponseText.trim();
-                    if (cleanText.startsWith('```json')) cleanText = cleanText.replace(/```json/i, '');
-                    if (cleanText.endsWith('```')) cleanText = cleanText.replace(/```$/, '');
+                    let text = fullResponseText.trim();
                     
-                    const startIndex = cleanText.indexOf('{');
-                    const endIndex = cleanText.lastIndexOf('}');
-                    if (startIndex !== -1 && endIndex !== -1 && endIndex >= startIndex) {
-                        cleanText = cleanText.substring(startIndex, endIndex + 1);
+                    // 1. Remove markdown code blocks if they exist
+                    if (text.includes('```')) {
+                        // Match everything inside the first set of ```json or ``` blocks
+                        const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                        if (match && match[1]) {
+                            text = match[1].trim();
+                        }
                     }
 
-                    // Fallback for raw HTML response
-                    if (cleanText.startsWith('<') || cleanText.toLowerCase().startsWith('<!doctype')) {
-                        parsedJson = { changes: [{ type: 'modify', path: 'index.html', content: cleanText }] };
+                    // 2. Locate the main JSON object by finding the first { and corresponding last }
+                    // This handles cases where the AI still returns text before/after even outside md blocks
+                    const firstBrace = text.indexOf('{');
+                    const lastBrace = text.lastIndexOf('}');
+                    
+                    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                        text = text.substring(firstBrace, lastBrace + 1);
+                    }
+
+                    // 3. Fallback for raw HTML response (useful for simple page generation)
+                    if (text.startsWith('<') || text.toLowerCase().startsWith('<!doctype')) {
+                        parsedJson = { 
+                            changes: [{ type: 'modify', path: 'index.html', content: text }],
+                            recommendations: ["Full screen preview", "Responsive check"]
+                        };
                     } else {
-                        parsedJson = JSON.parse(cleanText);
+                        // 4. Final attempt to parse
+                        try {
+                            parsedJson = JSON.parse(text);
+                        } catch (parseError) {
+                            // 5. Very aggressive cleanup (removing trailing commas, etc. if needed)
+                            // For now, we'll try one more fix: removing common malformations
+                            const repaired = text
+                                .replace(/,\s*([\]}])/g, '$1') // remove trailing commas
+                                .replace(/\n/g, ' ')           // remove newlines that might break some parsers
+                                .trim();
+                            parsedJson = JSON.parse(repaired);
+                        }
                     }
                 } catch (e) {
-                    console.error('Failed to parse AI response as JSON:', fullResponseText.slice(0, 200));
-                    send({ type: 'error', message: 'AI returned invalid JSON format.' });
+                    console.error('CRITICAL: AI Response Parsing Failed.');
+                    console.error('Raw problematic response:', fullResponseText.slice(0, 500));
+                    send({ type: 'error', message: 'The AI model returned an incompatible format. Please try again or rephrase your request.' });
                     return res.end();
                 }
 

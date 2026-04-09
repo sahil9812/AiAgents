@@ -28,8 +28,22 @@ app.set('trust proxy', 1);
 // Stripe webhook needs raw body — mount BEFORE express.json()
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost:5173', 'http://localhost:3000'];
+
+console.log(`[CORS] Allowed origins: ${allowedOrigins.join(', ')}`);
+
 app.use(cors({
-    origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173', 'http://localhost:3000'],
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman, Railway health checks)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+        console.warn(`[CORS] Blocked request from origin: ${origin}`);
+        return callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    },
     credentials: true,
 }));
 app.use(express.json({ limit: '5mb' }));

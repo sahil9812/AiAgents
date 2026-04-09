@@ -171,7 +171,7 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
                     try {
                         const { GoogleGenerativeAI } = require('@google/generative-ai');
                         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-                        const titleModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+                        const titleModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
                         const titlePrompt = `Generate a concise 3-4 word title for a conversation that starts with exactly this prompt: "${message.slice(0, 300)}". Output ONLY the title, no quotes or additional text.`;
                         const titleResult = await titleModel.generateContent(titlePrompt);
                         const generated = titleResult.response.text().trim().replace(/^["']|["']$/g, '');

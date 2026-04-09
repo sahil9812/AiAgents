@@ -23,15 +23,24 @@ router.post('/register', async (req, res) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email address.' });
 
     try {
+        console.log(`[Register] Attempt for email: ${email.toLowerCase().trim()}`);
         const passwordHash = await bcrypt.hash(password, 12);
-        // Read default_credits from system_settings (admin-controlled)
+        console.log(`[Register] Password hashed OK`);
+
         const setting = db.prepare("SELECT value FROM system_settings WHERE key = 'default_credits'").get();
         const defaultCredits = setting ? parseInt(setting.value) || 4 : 4;
+        console.log(`[Register] Default credits resolved: ${defaultCredits}`);
+
         const result = db.prepare(
             'INSERT INTO users (username, email, password_hash, credits) VALUES (?, ?, ?, ?)'
         ).run(username.trim(), email.toLowerCase().trim(), passwordHash, defaultCredits);
+        console.log(`[Register] User inserted with ID: ${result.lastInsertRowid}`);
+
         const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+        console.log(`[Register] User fetched OK, generating token`);
+
         res.status(201).json({ message: 'Account created.', token: generateToken(user), user: safeUser(user) });
+        console.log(`[Register] Success for: ${email.toLowerCase().trim()}`);
     } catch (err) {
         if (err.message && err.message.includes('UNIQUE constraint failed')) {
             const field = err.message.includes('email') ? 'email' : 'username';

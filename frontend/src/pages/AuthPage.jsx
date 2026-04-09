@@ -122,7 +122,15 @@ export default function AuthPage() {
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user', JSON.stringify(res.data.user));
             navigate('/chat');
-        } catch (err) { setError(err.response?.data?.error || 'Something went wrong. Please try again.'); }
+        } catch (err) {
+            // Network error (can't reach server at all — CORS or URL issue)
+            if (!err.response) {
+                setError(`Network Error: Could not connect to the server. Check that the backend is running and CORS_ORIGINS is set correctly on Railway.`);
+            } else {
+                // Server responded with an error
+                setError(err.response?.data?.error || `Server Error ${err.response.status}: ${err.response.statusText}`);
+            }
+        }
         finally { setLoading(false); }
     }
 
