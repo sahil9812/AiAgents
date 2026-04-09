@@ -22,6 +22,9 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
+// Trust proxy for Railway/PaaS to get real user IPs for rate limiting
+app.set('trust proxy', 1);
+
 // Stripe webhook needs raw body — mount BEFORE express.json()
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
@@ -32,8 +35,20 @@ app.use(cors({
 app.use(express.json({ limit: '5mb' }));
 
 // Rate limiters
-const globalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: { error: 'Too many requests.' } });
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { error: 'Too many auth attempts.' } });
+const globalLimiter = rateLimit({ 
+    windowMs: 15 * 60 * 1000, 
+    max: 1000, // Increased from 300
+    message: { error: 'Too many requests. Please try again in 15 minutes.' },
+    keyGenerator: (req) => req.ip // Explicitly use req.ip
+});
+
+const authLimiter = rateLimit({ 
+    windowMs: 15 * 60 * 1000, 
+    max: 100, // Increased from 20
+    message: { error: 'Too many auth attempts. Please try again later.' },
+    keyGenerator: (req) => req.ip
+});
+
 app.use(globalLimiter);
 
 // Routes
