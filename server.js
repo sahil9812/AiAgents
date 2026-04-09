@@ -13,6 +13,13 @@ const stripeRoutes = require('./routes/stripe');
 const projectRoutes = require('./routes/projects');
 const projectFilesRoutes = require('./routes/projectFiles');
 
+// Validate critical environment variables
+if (!process.env.JWT_SECRET) {
+    console.error('❌ CRITICAL ERROR: JWT_SECRET is not defined in .env or environment variables.');
+    console.error('Production deployment will fail during authentication.');
+    if (process.env.NODE_ENV === 'production') process.exit(1);
+}
+
 const app = express();
 
 // Stripe webhook needs raw body — mount BEFORE express.json()

@@ -1,9 +1,16 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const db = new Database(path.join(__dirname, 'agents.db'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+let db;
+try {
+    db = new Database(path.join(__dirname, 'agents.db'));
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+    console.log(`📂 Database initialized at: ${path.join(__dirname, 'agents.db')}`);
+} catch (err) {
+    console.error('❌ FAILED TO INITIALIZE DATABASE:', err.message);
+    process.exit(1);
+}
 
 // ── Users ────────────────────────────────────────────────────────────────────
 db.exec(`

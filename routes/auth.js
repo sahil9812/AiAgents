@@ -33,12 +33,12 @@ router.post('/register', async (req, res) => {
         const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
         res.status(201).json({ message: 'Account created.', token: generateToken(user), user: safeUser(user) });
     } catch (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
+        if (err.message && err.message.includes('UNIQUE constraint failed')) {
             const field = err.message.includes('email') ? 'email' : 'username';
             return res.status(409).json({ error: `That ${field} is already taken.` });
         }
-        console.error('Register error:', err);
-        res.status(500).json({ error: 'Server error. Please try again.' });
+        console.error('CRITICAL Registration Error:', err.message, err.stack);
+        res.status(500).json({ error: 'Server error. Please check backend logs.' });
     }
 });
 
@@ -60,8 +60,8 @@ router.post('/login', async (req, res) => {
 
         res.json({ message: 'Login successful.', token: generateToken(user), user: safeUser(user) });
     } catch (err) {
-        console.error('Login error:', err);
-        res.status(500).json({ error: 'Server error. Please try again.' });
+        console.error('CRITICAL Login Error:', err.message, err.stack);
+        res.status(500).json({ error: 'Server error. Please check backend logs.' });
     }
 });
 
