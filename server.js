@@ -52,15 +52,13 @@ app.use(express.json({ limit: '5mb' }));
 const globalLimiter = rateLimit({ 
     windowMs: 15 * 60 * 1000, 
     max: 1000, // Increased from 300
-    message: { error: 'Too many requests. Please try again in 15 minutes.' },
-    keyGenerator: (req) => req.ip // Explicitly use req.ip
+    message: { error: 'Too many requests. Please try again in 15 minutes.' }
 });
 
 const authLimiter = rateLimit({ 
     windowMs: 15 * 60 * 1000, 
     max: 100, // Increased from 20
-    message: { error: 'Too many auth attempts. Please try again later.' },
-    keyGenerator: (req) => req.ip
+    message: { error: 'Too many auth attempts. Please try again later.' }
 });
 
 app.use(globalLimiter);
@@ -84,7 +82,7 @@ const frontendPath = path.join(__dirname, 'frontend', 'dist');
 app.use(express.static(frontendPath));
 
 // Handle SPA routing: any request that doesn't match an API route or static file should serve index.html
-app.get('*', (req, res, next) => {
+app.get(/.*/, (req, res, next) => {
     // Skip API routes
     if (req.path.startsWith('/api')) return next();
     
