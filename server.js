@@ -84,9 +84,24 @@ const frontendPath = path.join(__dirname, 'frontend', 'dist');
 app.use(express.static(frontendPath));
 
 // Handle SPA routing: any request that doesn't match an API route or static file should serve index.html
-app.get(/.*/, (req, res, next) => {
+app.get('*', (req, res, next) => {
+    // Skip API routes
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    
+    // Skip requests with file extensions (likely assets that were missed by express.static)
+    // This prevents serving index.html for a missing .js or .css file (saving bandwidth + preventing syntax errors)
+    if (path.extname(req.path)) {
+        return res.status(404).json({ error: 'Asset not found' });
+    }
+
+    const indexPath = path.join(frontendPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('❌ Frontend build (index.html) missing at:', indexPath);
+            // Don't crash, but let the user know what's wrong if they are debugging
+            res.status(404).send('Frontend not built. Please check Railway logs for build errors.');
+        }
+    });
 });
 
 // 404
