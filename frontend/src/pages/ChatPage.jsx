@@ -7,6 +7,8 @@ import CreditBadge from '../components/CreditBadge';
 import CodeBlock from '../components/CodeBlock';
 import PreviewPanel from '../components/PreviewPanel';
 import { hasPreviewableCode } from '../utils/codeExtractor';
+import CommandPalette from '../components/CommandPalette';
+import AgentStore from '../components/AgentStore';
 
 // ── Prompt Templates ────────────────────────────────────────────────────────
 const PROMPT_TEMPLATES = [
@@ -97,6 +99,8 @@ export default function ChatPage() {
     const [announcementDismissed, setAnnouncementDismissed] = useState(false);
     const [selectedModel, setSelectedModel] = useState('deepseek');
     const [selectedBot, setSelectedBot] = useState('general');
+    const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
+    const [agentStoreOpen, setAgentStoreOpen] = useState(false);
 
     // Chat history
     const [chatSessions, setChatSessions] = useState([]);
@@ -130,6 +134,18 @@ export default function ChatPage() {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    // Ctrl+K / Cmd+K global shortcut
+    useEffect(() => {
+        function handleGlobalKey(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                setCmdPaletteOpen(o => !o);
+            }
+        }
+        document.addEventListener('keydown', handleGlobalKey);
+        return () => document.removeEventListener('keydown', handleGlobalKey);
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('botType', selectedBot);
@@ -615,13 +631,17 @@ export default function ChatPage() {
                             ))}
                         </div>
                     </div>
-                    <div className="agent-badge">
-                        <div className="agent-badge-icon">✨</div>
-                        <div className="agent-badge-info">
-                            <div className="agent-badge-name">{selectedBot === 'coding' ? 'Senior Agent' : 'Chat Bot'}</div>
-                            <div className="agent-badge-model">AI Agent</div>
+                    <button className="agent-badge agent-badge-btn" onClick={() => setAgentStoreOpen(true)} title="Switch Agent Persona">
+                        <div className="agent-badge-icon">
+                            {selectedBot === 'coding' ? '🧑‍💻' : selectedBot === 'data_analyst' ? '📊' : selectedBot === 'web_researcher' ? '🔍' : '🤖'}
                         </div>
-                    </div>
+                        <div className="agent-badge-info">
+                            <div className="agent-badge-name">
+                                {selectedBot === 'coding' ? 'Senior Coder' : selectedBot === 'data_analyst' ? 'Data Analyst' : selectedBot === 'web_researcher' ? 'Web Researcher' : 'Chat Bot'}
+                            </div>
+                            <div className="agent-badge-model">Click to switch agent ✨</div>
+                        </div>
+                    </button>
 
                     {credits !== null && (
                         <>
@@ -688,8 +708,10 @@ export default function ChatPage() {
                             margin: 0
                         }}
                     >
-                        <option value="coding" style={{ color: '#000', background: '#fff' }}>Senior AI Coding Agent</option>
-                        <option value="general" style={{ color: '#000', background: '#fff' }}>Chat Bot</option>
+                        <option value="coding" style={{ color: '#000', background: '#fff' }}>🧑‍💻 Senior Coder</option>
+                        <option value="general" style={{ color: '#000', background: '#fff' }}>🤖 Chat Bot</option>
+                        <option value="data_analyst" style={{ color: '#000', background: '#fff' }}>📊 Data Analyst</option>
+                        <option value="web_researcher" style={{ color: '#000', background: '#fff' }}>🔍 Web Researcher</option>
                     </select>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {/* Model Selector */}
@@ -939,6 +961,23 @@ export default function ChatPage() {
                     </div>
                 </div>
             )}
+
+            {/* ── Command Palette ── */}
+            <CommandPalette
+                open={cmdPaletteOpen}
+                onClose={() => setCmdPaletteOpen(false)}
+                onNewChat={handleNewChat}
+                onAgentChange={(agentType) => setSelectedBot(agentType)}
+                onThemeChange={(t) => setTheme(t)}
+            />
+
+            {/* ── Agent Store ── */}
+            <AgentStore
+                open={agentStoreOpen}
+                onClose={() => setAgentStoreOpen(false)}
+                activeAgent={selectedBot}
+                onSelect={(agentType) => setSelectedBot(agentType)}
+            />
         </div>
     );
 }

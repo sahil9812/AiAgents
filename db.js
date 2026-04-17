@@ -25,6 +25,7 @@ db.exec(`
     bio TEXT NOT NULL DEFAULT '',
     stripe_customer_id TEXT,
     suspended INTEGER NOT NULL DEFAULT 0,
+    memory_context TEXT NOT NULL DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
@@ -37,6 +38,8 @@ if (!existingCols.includes('avatar_color')) db.exec("ALTER TABLE users ADD COLUM
 if (!existingCols.includes('bio')) db.exec("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''");
 if (!existingCols.includes('stripe_customer_id')) db.exec("ALTER TABLE users ADD COLUMN stripe_customer_id TEXT");
 if (!existingCols.includes('suspended')) db.exec("ALTER TABLE users ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0");
+if (!existingCols.includes('memory_context')) db.exec("ALTER TABLE users ADD COLUMN memory_context TEXT NOT NULL DEFAULT ''");
+
 
 // ── System Settings ──────────────────────────────────────────────────────────
 db.exec(`

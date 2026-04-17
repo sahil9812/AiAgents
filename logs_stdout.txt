@@ -1,0 +1,13 @@
+[dotenv@17.3.1] injecting env (6) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+📂 Database initialized at: C:\Project Web\AiAgents\agents.db
+[CORS] Allowed origins: http://localhost:5173, http://localhost:3000
+✅ AI Agent Server running on http://localhost:5000
+[Register] Attempt for email: testuser2@example.com
+[Register] Password hashed OK
+[Register] Default credits resolved: 10
+[Register] User inserted with ID: 13
+[Register] User fetched OK, generating token
+[Register] Success for: testuser2@example.com
+[Register] Attempt for email: testuser2@example.com
+[Register] Password hashed OK
+[Register] Default credits resolved: 10

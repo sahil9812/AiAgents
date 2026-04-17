@@ -152,10 +152,22 @@ router.post('/chat', authMiddleware, creditsMiddleware, (req, res, next) => {
             }
         }
 
+        // Fetch user context
+        const userRow = db.prepare('SELECT memory_context FROM users WHERE id = ?').get(req.user.id);
+        let dynamicSystemPrompt = botType === 'general' ? GENERAL_SYSTEM_PROMPT : CODING_SYSTEM_PROMPT;
+
+        // Custom bots
+        if (botType === 'data_analyst') dynamicSystemPrompt = "You are an expert Data Analyst AI. Your goal is to analyze data, find trends, and propose solutions based on data. Provide insights using markdown. Always give detailed numeric breakdowns if possible.";
+        if (botType === 'web_researcher') dynamicSystemPrompt = "You are a Web Researcher Agent. You compile comprehensive research reports. Use clear headings, bullet points, and extensive citations or links where possible. Be highly detailed.";
+        
+        if (userRow && userRow.memory_context && userRow.memory_context.trim().length > 0) {
+            dynamicSystemPrompt += `\n\n[USER SPECIFIC MEMORY AND INSTRUCTIONS]\nThe following are instructions stored in the user's memory. ALWAYS follow them:\n${userRow.memory_context}`;
+        }
+
         await aiService.stream({
             model: effectiveModel,
             prompt: runPrompt,
-            systemPrompt: botType === 'general' ? GENERAL_SYSTEM_PROMPT : CODING_SYSTEM_PROMPT,
+            systemPrompt: dynamicSystemPrompt,
             history,
             onChunk: (text) => {
                 fullResponse += text;

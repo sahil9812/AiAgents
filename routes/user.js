@@ -9,15 +9,15 @@ router.use(authMiddleware);
 // GET /api/user/me
 router.get('/me', (req, res) => {
   const user = db.prepare(
-    'SELECT id, username, email, credits, role, avatar_color, bio, created_at FROM users WHERE id = ?'
+    'SELECT id, username, email, credits, role, avatar_color, bio, memory_context, created_at FROM users WHERE id = ?'
   ).get(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found.' });
   res.json({ user });
 });
 
-// PATCH /api/user/profile — update username, bio, avatar_color
+// PATCH /api/user/profile — update username, bio, avatar_color, memory_context
 router.patch('/profile', (req, res) => {
-  const { username, bio, avatar_color } = req.body;
+  const { username, bio, avatar_color, memory_context } = req.body;
 
   if (username && username.trim().length < 2) return res.status(400).json({ error: 'Username must be at least 2 characters.' });
 
@@ -25,8 +25,9 @@ router.patch('/profile', (req, res) => {
     if (username) db.prepare('UPDATE users SET username = ? WHERE id = ?').run(username.trim(), req.user.id);
     if (bio !== undefined) db.prepare('UPDATE users SET bio = ? WHERE id = ?').run(bio.slice(0, 200), req.user.id);
     if (avatar_color) db.prepare('UPDATE users SET avatar_color = ? WHERE id = ?').run(avatar_color, req.user.id);
+    if (memory_context !== undefined) db.prepare('UPDATE users SET memory_context = ? WHERE id = ?').run(memory_context.slice(0, 2000), req.user.id);
 
-    const user = db.prepare('SELECT id, username, email, credits, role, avatar_color, bio FROM users WHERE id = ?').get(req.user.id);
+    const user = db.prepare('SELECT id, username, email, credits, role, avatar_color, bio, memory_context FROM users WHERE id = ?').get(req.user.id);
     res.json({ message: 'Profile updated.', user });
   } catch (err) {
     if (err.message.includes('UNIQUE')) return res.status(409).json({ error: 'That username is already taken.' });
