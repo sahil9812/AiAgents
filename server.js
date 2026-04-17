@@ -1,6 +1,7 @@
 require('dotenv').config({ override: true });
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
@@ -79,26 +80,29 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toI
 
 // Serve static assets in production
 const frontendPath = path.join(__dirname, 'frontend', 'dist');
+console.log(`[Static] Serving frontend from: ${frontendPath}`);
+console.log(`[Static] index.html exists: ${fs.existsSync(path.join(frontendPath, 'index.html'))}`);
 app.use(express.static(frontendPath));
 
-// Handle SPA routing: any non-API, non-asset request serves index.html
-// Using app.use() instead of app.get(/.*/) for Express 5 compatibility
+// SPA fallback — serve index.html for all non-API, non-asset routes
 app.use((req, res, next) => {
-    // Skip API routes
+    // Pass API routes through to the 404 handler
     if (req.path.startsWith('/api')) return next();
 
-    // Skip requests with file extensions (static assets not found by express.static)
-    if (path.extname(req.path)) {
-        return res.status(404).json({ error: 'Asset not found' });
-    }
+    // Pass asset requests (missing .js/.css etc) through to the 404 handler
+    if (path.extname(req.path)) return next();
 
     const indexPath = path.join(frontendPath, 'index.html');
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('❌ Frontend build (index.html) missing at:', indexPath);
-            res.status(503).send('Frontend not built. Run "npm run build" first.');
-        }
-    });
+
+    // Check existence synchronously to avoid Express 5 sendFile callback edge cases
+    if (!fs.existsSync(indexPath)) {
+        console.error('❌ index.html not found at:', indexPath);
+        return res.status(503).send(
+            '<h2>Frontend not built.</h2><p>Run <code>npm run build</code> to generate the frontend bundle.</p>'
+        );
+    }
+
+    res.sendFile(indexPath);
 });
 
 // 404
