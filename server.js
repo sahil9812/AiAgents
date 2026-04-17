@@ -52,14 +52,16 @@ app.use(express.json({ limit: '5mb' }));
 // Rate limiters
 const globalLimiter = rateLimit({ 
     windowMs: 15 * 60 * 1000, 
-    max: 1000, // Increased from 300
-    message: { error: 'Too many requests. Please try again in 15 minutes.' }
+    max: 1000,
+    message: { error: 'Too many requests. Please try again in 15 minutes.' },
+    validate: { xForwardedForHeader: false } // suppress Railway proxy header validation error
 });
 
 const authLimiter = rateLimit({ 
     windowMs: 15 * 60 * 1000, 
-    max: 100, // Increased from 20
-    message: { error: 'Too many auth attempts. Please try again later.' }
+    max: 100,
+    message: { error: 'Too many auth attempts. Please try again later.' },
+    validate: { xForwardedForHeader: false }
 });
 
 app.use(globalLimiter);
